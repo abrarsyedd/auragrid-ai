@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: backend
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - image: 682800988157.dkr.ecr.us-east-1.amazonaws.com/auragrid-backend:v1
+          name: auragrid-backend
+          envFrom:
+            - configMapRef:
+                name: backend-config
+            - secretRef:
+                name: db-credentials
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 500m
+            limits:
+              memory: 512Mi
+              cpu: 1000m
+          livenessProbe:
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+        - name: log-exporter
+          image: alpine
+          command:
+            - /bin/sh
+            - '-c'
+            - echo 'Sidecar running!' && sleep 3600
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
